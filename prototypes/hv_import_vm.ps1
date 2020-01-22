@@ -1,21 +1,30 @@
 # This TEMPLATE script will import and rename VM including VHDX HardDisk file
 
-# Bugs/Limiations:
-# - only 1st HDD handled/renamed
+# Example Usage:
+# .\hv_import_vm.ps1 "C:\EXPORTS\debian10-efi\Virtual Machines\A01581F6-157C-4489-9A9E-6D67B6622664.vmcx" "debian10-efi3"
 
-# These variables must be customized before run
-$new_vmname = "debian10-efi11"
-$import_vmfile = 'C:\EXPORTS\debian10-efi\Virtual Machines\A01581F6-157C-4489-9A9E-6D67B6622664.vmcx'
+# Bugs/Limitations
+# - only 1st HDD is handled/renamed
 
+ param (
+    [Parameter(Mandatory=$true, HelpMessage="Pathname to *.vmcx file to import (from exported VM)")][string]$import_vmfile,
+    [Parameter(Mandatory=$true, HelpMessage="Final imported VM name")][string]$new_vmname
+ )
+
+# You may likely customize this variable...
 $temp_vhdx_dir = 'C:\TEMP'
+
 # Stop on error in cmdlets
 $ErrorActionPreference = "Stop"
 
 
 $VhdTargetPath = Get-VMHost | select -ExpandProperty VirtualHardDiskPath
-echo "VHD Target PATH: $VhdTargetPath"
 $new_vhdx_name="$new_vmname.vhdx"
 $new_vhdx = Join-Path $VhdTargetPath $new_vhdx_name
+
+Write-Host "Will import:"
+Write-Host " - VM File: '$import_vmfile'"
+Write-Host " - Final VM Name: '$new_vmname'"
 
 # basic sanity checks
 if ( get-vm | where-object VMName -eq $new_vmname ){
@@ -37,7 +46,7 @@ if ( -not ( Test-Path $temp_vhdx_dir -PathType Container ) ){
 Set-PSDebug -Trace 1
 
 $vm = Import-VM -Path  $import_vmfile `
-       -VhdDestinationPath c:\TEMP\ -Copy -GenerateNewId
+       -VhdDestinationPath $temp_vhdx_dir -Copy -GenerateNewId
 
 $vmid = $vm.VmId.ToString()
 Write-Host "Imported VmId='$vmid'"
@@ -58,5 +67,5 @@ Set-PSDebug -Trace 0
 
 # show new VM
 Write-Host "VM Imported: Id= '$vmid' "
-get-vm -Id $vmid | select -ExpandProperty HardDrives `
+get-vm -Id $vmid | select -ExpandProperty HardDrives CreationTime `
         | select VMName,VmId,Path,CreationTime
