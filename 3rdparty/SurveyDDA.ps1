@@ -36,6 +36,7 @@ $pcidevs = $pnpdevs | Where-Object {$_.InstanceId -like "PCI*"}
 foreach ($pcidev in $pcidevs) {
     Write-Host ""
     Write-Host ""
+    Write-Host -ForegroundColor White -BackgroundColor Black $pcidev.PNPDeviceId
     Write-Host -ForegroundColor White -BackgroundColor Black $pcidev.FriendlyName
 
     $rmrr =  ($pcidev | Get-PnpDeviceProperty $devpkey_PciDevice_RequiresReservedMemoryRegion).Data
